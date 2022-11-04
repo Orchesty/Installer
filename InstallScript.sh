@@ -14,6 +14,6 @@ cd $output/$projectName
 rm -rf .git
 sed -i 's/skeleton/'${projectName,,}'/g' .env.dist >> .env.dist
 sed -i 's/Skeleton/'${projectName[@]^}'/' README.md >> README.md
-sed -i 's/skeleton/'${projectName,,}'/g' nodejs-sdk/package.json >> package.json
-sed -i 's/skeleton/'${projectName,,}'/g' php-sdk/composer.json >> composer.json
+sed -i 's/skeleton/'${projectName,,}'/g' nodejs-sdk/package.json >> nodejs-sdk/package.json
+sed -i 's/skeleton/'${projectName,,}'/g' php-sdk/composer.json >> php-sdk/composer.json
 echo Project name: [$projectName] was created to directory: $output
