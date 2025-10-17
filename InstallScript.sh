@@ -37,25 +37,40 @@ declare type=$1
 
 echo "Select project version:"
 options=("2.1" "2.0" "custom")
+default=1
 
-select version in "${options[@]}"; do
-  case $version in
-    "2.0"|"2.1")
-      echo "✅ Selected version: $version"
-      break
-      ;;
-    "custom")
-      read -p "Enter custom version: " customVersion
-      [ -z "$customVersion" ] && echo "Error: version must be specified" && exit 1
-      version="$customVersion"
-      echo "✅ Selected custom version: $version"
-      break
-      ;;
-    *)
-      echo "Invalid choice. Please try again."
-      ;;
-  esac
+for i in "${!options[@]}"; do
+  index=$((i + 1))
+  if [ "$index" -eq "$default" ]; then
+    echo " $index) ${options[$i]} (default)"
+  else
+    echo " $index) ${options[$i]}"
+  fi
 done
+
+read -p "#? " choice
+
+if [ -z "$choice" ]; then
+  choice=$default
+fi
+
+version="${options[$((choice - 1))]}"
+
+case $version in
+  "2.0"|"2.1")
+    echo "✅ Selected version: $version"
+    ;;
+  "custom")
+    read -p "Enter custom version: " customVersion
+    [ -z "$customVersion" ] && echo "Error: version must be specified" && exit 1
+    version="$customVersion"
+    echo "✅ Selected custom version: $version"
+    ;;
+  *)
+    echo "Invalid choice. Please try again."
+    exit 1
+    ;;
+esac
 
 read -p 'Project name: ' projectName
 [ -z "$projectName" ] && echo Error: Project name must be specified && exit
@@ -66,8 +81,10 @@ read -p 'Output (Default: ./): ' output
 mkdir -p $output
 [ -d "$output" ] && echo $output was successfully created || (echo $output was not created && exit)
 
+projectNameLowercase=$(echo "$projectName" | tr '[:upper:]' '[:lower:]')
+
+output="${output%/}"
 path="${output}/${projectName}"
-path="${path//\/\//\/}"
 
 git clone https://github.com/Orchesty/orchesty-"$type".git $path
 echo Orchesty was successfully downloaded
@@ -78,6 +95,6 @@ rm -rf .git
 sed -i 's/skeleton/'$projectName'/g' .env.dist >> .env.dist
 sed -i 's/^VERSION=.*/VERSION='$version'/' .env.dist >> .env.dist
 sed -i 's/Skeleton/'${projectName[@]^}'/' README.md >> README.md
-sed -i 's/skeleton/'$projectName'/g' nodejs-sdk/package.json >> nodejs-sdk/package.json
-sed -i 's/skeleton/'$projectName'/g' php-sdk/composer.json >> php-sdk/composer.json
+sed -i 's/skeleton/'$projectNameLowercase'/g' worker/package.json >> worker/package.json
+
 echo Project name: [$projectName] was created to directory: $output
