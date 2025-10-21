@@ -1,6 +1,26 @@
 #!/bin/bash
 
 set -e
+
+DRY_RUN=false
+
+for arg in "$@"; do
+  case "$arg" in
+    --dry)
+      DRY_RUN=true
+      ;;
+    *)
+      ;;
+  esac
+done
+
+sed_error() {
+  echo "⚠️ Non-GNU sed detected ($(command -v sed))."
+  echo "👉 Replace it by: brew install gnu-sed"
+  echo "   and set PATH=\"/opt/homebrew/opt/gnu-sed/libexec/gnubin:\$PATH\" in your .zshrc"
+  exit 1
+}
+
 echo "Checking prerequisites ..."
 if ! command -v make >/dev/null 2>&1; then
   echo "❌ Make is missing. Please install it before use."
@@ -11,22 +31,26 @@ else
   echo "✅ Make is present ($(command -v make))"
 fi
 
-if command -v gsed >/dev/null 2>&1; then
-  echo "✅ GNU sed (gsed) is present ($(command -v gsed))"
-elif command -v sed >/dev/null 2>&1; then
-  if sed --version 2>/dev/null | grep -q 'GNU'; then
-    echo "✅ GNU sed (gsed) is present ($(command -v gsed))"
+if command -v sed >/dev/null 2>&1; then
+  if sed --version >/dev/null 2>&1 2>/dev/null; then
+    if sed --version 2>/dev/null | grep -q 'GNU'; then
+      echo "✅ GNU sed is present ($(command -v sed))"
+    else
+      sed_error
+    fi
   else
-    echo "⚠️ BSD sed is present ($(command -v sed)), instead of GNU sed."
-    echo "👉 Replace it by: brew install gnu-sed"
-    echo "   and set alias for it: alias sed='gsed'"
-    exit 1
+    # BSD sed (macOS)
+    sed_error
   fi
 else
-  echo "❌ GNU sed is not present. Please install it before use."
+  echo "❌ sed is not present. Please install it before use."
   echo "👉 MacOS: brew install gnu-sed"
-  echo "👉 Linuxu (Debian/Ubuntu): sudo apt install sed"
+  echo "👉 Linux (Debian/Ubuntu): sudo apt install sed"
   exit 1
+fi
+
+if [[ "$DRY_RUN" == true ]]; then
+  exit 0
 fi
 
 echo "Installing ..."
